@@ -13,7 +13,7 @@ import time
 from os import listdir
 from os.path import isfile, join
 parameters_list = []
-onlyfiles = [f for f in listdir(r"../datasets/gpy") if isfile(join(r"../datasets/gpy", f))]
+onlyfiles = [f for f in listdir(r"./gpy") if isfile(join(r"./gpy", f))]
 data_names = [i.split('.', 1)[0] for i in onlyfiles]
 #data_names = ["CorelSkiing", "CorelSunset", "CorelWaterfalls"]
 for data_s in data_names:
