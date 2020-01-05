@@ -15,12 +15,12 @@ from os.path import isfile, join
 parameters_list = []
 onlyfiles = [f for f in listdir(r"./gpy") if isfile(join(r"./gpy", f))]
 data_names = [i.split('.', 1)[0] for i in onlyfiles]
-#data_names = ["CorelSkiing", "CorelSunset", "CorelWaterfalls"]
+#data_names = ["Musk1"]
 for data_s in data_names:
  def experiment_fn( parameters,
                     dataset=data_s,
                     n_classes=2,
-                    folder=r"..\datasets",
+                    folder=r".\datasets",
                     n_rep=11,
                     n_fold=11,
                     n_epochs=100,
@@ -269,15 +269,16 @@ for data_s in data_names:
          exact_eval=True,
          maximize=True
      )
- max_iter = 2
- optimizer.run_optimization(max_iter, max_time=120)
- optimizer.plot_convergence(filename="optimizer_bayesopt.png")
+ max_iter = 40
+ optimizer.run_optimization(max_iter, max_time=3600)
+ con_plot = data_s + "_optimizer_bayesopt.png"
+ optimizer.plot_convergence(filename=con_plot)
  print(optimizer.Y_best[-1])
  print(optimizer.x_opt)
- import winsound
+ #import winsound
  duration = 2000  # milliseconds
  freq = 1500  # Hz
- winsound.Beep(freq, duration)
+ #winsound.Beep(freq, duration)
  parameters = optimizer.x_opt
  parameters_output = np.transpose([parameters])
  df_parameters = DataFrame(parameters_output)
@@ -485,7 +486,7 @@ for data_s in data_names:
        accuracy_file = files.format("acc", dataset, "0", str(rep), str(fold)) 
 
        plt.plot(train_loss_hist, label="train_loss")
-       plt.plot(eval_loss_hist, label="eval_loss")
+       wiplt.plot(eval_loss_hist, label="eval_loss")
        plt.title("Loss History")
        plt.legend()
        plt.savefig(loss_file)
@@ -507,4 +508,4 @@ for data_s in data_names:
  print(np.mean(final_vals), "mean final vals")
  duration = 2000  # milliseconds
  freq = 1500  # Hz
- winsound.Beep(freq, duration)
+ #winsound.Beep(freq, duration)
