@@ -486,7 +486,7 @@ for data_s in data_names:
        accuracy_file = files.format("acc", dataset, "0", str(rep), str(fold)) 
 
        plt.plot(train_loss_hist, label="train_loss")
-       wiplt.plot(eval_loss_hist, label="eval_loss")
+       plt.plot(eval_loss_hist, label="eval_loss")
        plt.title("Loss History")
        plt.legend()
        plt.savefig(loss_file)
