@@ -26,7 +26,6 @@ import itertools
 
 import os
 
-import GPyOpt
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -39,8 +38,6 @@ from mil import get_data
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 import time
-from os import listdir
-from os.path import isfile, join
 import os
 
 import torch
