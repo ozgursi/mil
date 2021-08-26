@@ -814,6 +814,7 @@ group_id = sys.argv[1]
 print(f"Group id is {group_id}")
 
 datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
+datasets.remove("Web6")
 
 for dataset in datasets:
     scores = []
