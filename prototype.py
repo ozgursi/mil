@@ -44,6 +44,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
 def gram_matrix(mat):
   mat = mat.squeeze(dim=0)
