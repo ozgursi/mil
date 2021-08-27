@@ -27,16 +27,12 @@ import itertools
 import os
 
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import numpy as np
 from sklearn.metrics import roc_auc_score
-from utils import plot_prototypes
 from model import ShapeletGenerator, pairwise_dist
 from mil import get_data
 #from prototype_forest import PrototypeForest
-import matplotlib.pyplot as plt
-from pandas import DataFrame
 import time
 import os
 
