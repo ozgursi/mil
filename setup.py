@@ -11,7 +11,7 @@ setup(
     install_requires=[
         "pandas==1.2.3",
         "numpy==1.20.2",
-        "torch==1.9.0",
+        "torch==1.7.1",
         "sklearn",
         "scipy==1.6.3"
     ],
