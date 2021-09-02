@@ -801,7 +801,7 @@ all_accuracy = []
 info_list = []
 
 parameters = [[0.00001, 0.05], [0.00001, 0.05],[0.00001, 0.05], [0.00001, 0.05], [0.00001, 0.05], [1],[1]]
-forest_param = [[50, 75, 100],[4, 8, 10]]
+forest_param = [[50, 75, 100],[4, 8, 10], [0.95, 1]]
 
 groups = pd.read_csv("./dataset_groups.csv")
 
@@ -810,45 +810,46 @@ group_id = sys.argv[1]
 print(f"Group id is {group_id}")
 
 datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
-datasets.remove("Web6")
+
 
 for dataset in datasets:
     scores = []
 
     for i in forest_param[0]:
         for j in forest_param[1]:
+            for k in forest_param[2]:
+	            (train_features,
+	                 train_labels,
+	                 train_bag_ids,
+	                 test_features,
+	                 test_labels,
+	                 test_bag_ids) = train_test_split(dataset, 5, 10, k, fit_on_full = False, custom=True)
 
-            (train_features,
-                 train_labels,
-                 train_bag_ids,
-                 test_features,
-                 test_labels,
-                 test_bag_ids) = train_test_split(dataset, 5, 10, 1, fit_on_full = False, custom=True)
+	            model = PrototypeForest(size=i,
+	                                    max_depth=j,
+	                                    min_samples_leaf=40,
+	                                    min_samples_split=80,
+	                                    prototype_count=1,
+	                                    early_stopping_round= 3,
+	                                    use_prototype_learner = False)
 
-            model = PrototypeForest(size=i,
-                                    max_depth=j,
-                                    min_samples_leaf=40,
-                                    min_samples_split=80,
-                                    prototype_count=1,
-                                    early_stopping_round= 3,
-                                    use_prototype_learner = False)
+	            model.fit(train_features, train_labels, train_bag_ids)
 
-            model.fit(train_features, train_labels, train_bag_ids)
+	            probas = model.predict_proba(test_features, test_bag_ids)
 
-            probas = model.predict_proba(test_features, test_bag_ids)
-
-            score = metrics.roc_auc_score(test_labels, probas)
-            scores.append([i, j, score])
+	            score = metrics.roc_auc_score(test_labels, probas)
+	            scores.append([i, j, k, score])
     
-    df = pd.DataFrame(scores, columns = ["size", "max_depth", "score"])
+    df = pd.DataFrame(scores, columns = ["size", "max_depth", "variance","score"])
 
     best_row = df.iloc[df["score"].argmax()]
     best_size = int(best_row.get("size"))
     best_depth = int(best_row.get("max_depth"))
-        
+    best_var = best_row.get("variance")
+
     all_accuracy = []
 
-    print(f"Best size is {best_size} and best depth is {best_depth} for dataset {dataset}")
+    print(f"Best size is {best_size} and best depth is {best_depth} and best var is {best_var} for dataset {dataset}")
     for i in range(1,6):
         for j in range(1, 11):
             print(f"Rep {i}, fold {j}")
@@ -859,7 +860,7 @@ for dataset in datasets:
                  train_bag_ids,
                  test_features,
                  test_labels,
-                 test_bag_ids) = train_test_split(dataset, i, j, 1, fit_on_full = False)
+                 test_bag_ids) = train_test_split(dataset, i, j, best_var, fit_on_full = False)
 
             model = PrototypeForest(size=best_size,
                                     max_depth=best_depth,
@@ -875,10 +876,10 @@ for dataset in datasets:
 
             score = metrics.roc_auc_score(test_labels, probas)
             end_time = time.time()
-            info_list_row = [dataset, i, j, best_size, best_depth, score, end_time - start_time]
+            info_list_row = [dataset, i, j, best_size, best_depth, best_var, score, end_time - start_time]
             info_list.append(info_list_row)
             print(f"Score is {score}")
             all_accuracy.append(metrics.roc_auc_score(test_labels, probas))
 
-    perf_df = pd.DataFrame(info_list, columns=["dataset", "rep", "fold", "best_size", "best_depth", "auc", "time"])
+    perf_df = pd.DataFrame(info_list, columns=["dataset", "rep", "fold", "best_size", "best_depth", "best_var",  "auc", "time"])
     perf_df.to_csv(f"./performance/{dataset}.csv")
