@@ -13,6 +13,7 @@ setup(
         "numpy==1.20.2",
         "torch==1.7.1",
         "sklearn",
-        "scipy==1.6.3"
+        "scipy==1.6.3",
+        "matplotlib"
     ],
 )
