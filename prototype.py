@@ -876,10 +876,10 @@ for dataset in datasets:
 
             score = metrics.roc_auc_score(test_labels, probas)
             end_time = time.time()
-            info_list_row = [dataset, i, j, best_size, best_depth, score, end_time - start_time]
+            info_list_row = [dataset, i, j, best_size, best_depth, best_var, score, end_time - start_time]
             info_list.append(info_list_row)
             print(f"Score is {score}")
             all_accuracy.append(metrics.roc_auc_score(test_labels, probas))
 
-    perf_df = pd.DataFrame(info_list, columns=["dataset", "rep", "fold", "best_size", "best_depth", "auc", "time"])
+    perf_df = pd.DataFrame(info_list, columns=["dataset", "rep", "fold", "best_size", "best_depth", "best_var",  "auc", "time"])
     perf_df.to_csv(f"./performance/{dataset}.csv")
