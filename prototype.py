@@ -797,11 +797,7 @@ def generate_random(lower, upper):
     random_number = random_number*random_range
     return random_number
 
-all_accuracy = []
-info_list = []
-
 parameters = [[0.00001, 0.05], [0.00001, 0.05],[0.00001, 0.05], [0.00001, 0.05], [0.00001, 0.05], [1],[1]]
-forest_param = [[50, 75, 100],[4, 8, 10], [0.95, 1]]
 
 groups = pd.read_csv("./dataset_groups.csv")
 
@@ -810,46 +806,58 @@ group_id = sys.argv[1]
 print(f"Group id is {group_id}")
 
 datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
-
+best_params = pd.read_csv("./best_params.csv")
 
 for dataset in datasets:
     scores = []
+    info_list = []
 
-    for i in forest_param[0]:
-        for j in forest_param[1]:
-            for k in forest_param[2]:
-	            (train_features,
-	                 train_labels,
-	                 train_bag_ids,
-	                 test_features,
-	                 test_labels,
-	                 test_bag_ids) = train_test_split(dataset, 5, 10, k, fit_on_full = False, custom=True)
+    PCA_vals = best_params[best_params["dataset"] == dataset]["PCA"].values.tolist()
+    best_depth = best_params[best_params["dataset"] == dataset]["max_depth"].values[0]
+    best_size = best_params[best_params["dataset"] == dataset]["ntree"].values[0]
 
-	            model = PrototypeForest(size=i,
-	                                    max_depth=j,
-	                                    min_samples_leaf=40,
-	                                    min_samples_split=80,
-	                                    prototype_count=1,
-	                                    early_stopping_round= 3,
-	                                    use_prototype_learner = False)
-
-	            model.fit(train_features, train_labels, train_bag_ids)
-
-	            probas = model.predict_proba(test_features, test_bag_ids)
-
-	            score = metrics.roc_auc_score(test_labels, probas)
-	            scores.append([i, j, k, score])
+    if(len(PCA_vals[0]) > 1):
+        PCA_vals = PCA_vals[0].split("-")
+        PCA_vals = [float(x) for x in PCA_vals]
+    else:
+        PCA_vals = best_params[best_params["dataset"] == dataset]["PCA"].values[0]
     
-    df = pd.DataFrame(scores, columns = ["size", "max_depth", "variance","score"])
+    if(len(PCA_vals) > 0):
+        for k in PCA_vals:
+            (train_features,
+                    train_labels,
+                    train_bag_ids,
+                    test_features,
+                    test_labels,
+                    test_bag_ids) = train_test_split(dataset, 5, 10, k, fit_on_full = False, custom=True)
 
-    best_row = df.iloc[df["score"].argmax()]
-    best_size = int(best_row.get("size"))
-    best_depth = int(best_row.get("max_depth"))
-    best_var = best_row.get("variance")
+            model = PrototypeForest(size=best_size,
+                                    max_depth=best_depth,
+                                    min_samples_leaf=2,
+                                    min_samples_split=4,
+                                    prototype_count=1,
+                                    early_stopping_round= 3,
+                                    use_prototype_learner = False)
+
+            model.fit(train_features, train_labels, train_bag_ids)
+
+            probas = model.predict_proba(test_features, test_bag_ids)
+
+            score = metrics.roc_auc_score(test_labels, probas)
+            scores.append([k, score])
+    
+            df = pd.DataFrame(scores, columns = ["variance","score"])
+
+            best_row = df.iloc[df["score"].argmax()]
+            best_var = best_row.get("variance")
+    else:
+        best_var = PCA_vals
+
 
     all_accuracy = []
 
     print(f"Best size is {best_size} and best depth is {best_depth} and best var is {best_var} for dataset {dataset}")
+    
     for i in range(1,6):
         for j in range(1, 11):
             print(f"Rep {i}, fold {j}")

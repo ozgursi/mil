@@ -1,0 +1,74 @@
+dataset,max_depth,ntree,PCA
+Web1,12,100,0.5 - 0.75 - 1
+Web2,12,100,0.5 - 0.75 - 1
+Web3,12,100,0.5 - 0.75 - 1
+Web4,12,100,0.5 - 0.75 - 1
+Web5,12,100,0.5 - 0.75 - 1
+Web6,12,100,0.5 - 0.75 - 1
+Web7,12,100,0.5 - 0.75 - 1
+Web8,12,100,0.5 - 0.75 - 1
+Web9,12,100,0.5 - 0.75 - 1
+BrownCreeper,8,100,1
+Chestnut-backedChickadee,8,100,1
+CorelAfrican,8,100,1
+CorelAntique,8,100,1
+CorelBattleships,8,100,1
+CorelBeach,8,100,1
+CorelBuses,8,100,1
+CorelCars,8,100,1
+CorelDesserts,8,100,1
+CorelDinosaurs,8,100,1
+CorelDogs,8,100,1
+CorelElephants,8,100,1
+CorelFashion,8,100,1
+CorelFlowers,8,100,1
+CorelFood,8,100,1
+CorelHistorical,8,100,1
+CorelHorses,8,100,1
+CorelLizards,8,100,1
+CorelMountains,8,100,1
+CorelSkiing,8,100,1
+CorelSunset,8,100,1
+CorelWaterfalls,8,100,1
+Dark-eyedJunco,8,100,1
+Elephant,8,100,1
+Fox,8,100,1
+HammondsFlycatcher,8,100,1
+Harddrive1,8,100,1
+Harddrive2,8,100,1
+HermitThrush,8,100,1
+HermitWarbler,8,100,1
+Musk1,8,100,1
+Musk2,8,100,1
+Olive-sidedFlycatcher,8,100,1
+PacificslopeFlycatcher,8,100,1
+Protein,8,100,1
+Red-breastedNuthatch,8,100,1
+SwainsonsThrush,8,100,1
+Tiger,8,100,1
+UCSBBreastCancer,16,100,0.5 - 0.75 - 0.9 - 1
+VariedThrush,8,100,1
+WesternTanager,8,100,1
+WinterWren,8,100,1
+Newsgroups1,8,100,1
+Newsgroups10,8,100,1
+Newsgroups11,8,100,1
+Newsgroups12,8,100,1
+Newsgroups13,8,100,1
+Newsgroups14,8,100,1
+Newsgroups15,8,100,1
+Newsgroups16,16,100,0.5 - 0.75 - 0.9 - 1
+Newsgroups17,16,100,0.5 - 0.75 - 0.9 - 1
+Newsgroups18,8,100,1
+Newsgroups19,8,100,0.5 - 0.75 - 0.9 - 1
+Newsgroups2,8,100,1
+Newsgroups20,8,100,1
+Newsgroups3,8,100,1
+Newsgroups4,8,100,1
+Newsgroups5,8,100,1
+Newsgroups6,8,100,1
+Newsgroups7,8,100,1
+Newsgroups8,8,100,1
+Newsgroups9,8,100,1
+Mutagenesis1,8,100,1
+Mutagenesis2,8,100,1
