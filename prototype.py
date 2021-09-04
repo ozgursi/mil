@@ -820,7 +820,7 @@ for dataset in datasets:
         PCA_vals = PCA_vals[0].split("-")
         PCA_vals = [float(x) for x in PCA_vals]
     else:
-        PCA_vals = best_params[best_params["dataset"] == dataset]["PCA"].values[0]
+        PCA_vals = float(best_params[best_params["dataset"] == dataset]["PCA"].values[0])
     
     if(len(PCA_vals) > 0):
         for k in PCA_vals:
@@ -847,7 +847,7 @@ for dataset in datasets:
             scores.append([k, score])
     
             df = pd.DataFrame(scores, columns = ["variance","score"])
-
+            print(df)
             best_row = df.iloc[df["score"].argmax()]
             best_var = best_row.get("variance")
     else:
