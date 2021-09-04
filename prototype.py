@@ -822,7 +822,7 @@ for dataset in datasets:
     else:
         PCA_vals = float(best_params[best_params["dataset"] == dataset]["PCA"].values[0])
     
-    if(len(PCA_vals) > 0):
+    if(isinstance(PCA_vals, list)):
         for k in PCA_vals:
             (train_features,
                     train_labels,
