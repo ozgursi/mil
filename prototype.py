@@ -890,4 +890,4 @@ for dataset in datasets:
             all_accuracy.append(metrics.roc_auc_score(test_labels, probas))
 
     perf_df = pd.DataFrame(info_list, columns=["dataset", "rep", "fold", "best_size", "best_depth", "best_var",  "auc", "time"])
-    perf_df.to_csv(f"./performance/{dataset}.csv")
+    perf_df.to_csv(f"./performance_new/{dataset}.csv")
