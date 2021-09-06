@@ -808,6 +808,11 @@ print(f"Group id is {group_id}")
 datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
 best_params = pd.read_csv("./best_params.csv")
 
+import os
+check = os.listdir("./performance_new")
+ran_already = [x.split(".")[0] for x in check]
+datasets = list(set(datasets) - set(ran_already))
+
 for dataset in datasets:
     scores = []
     info_list = []
