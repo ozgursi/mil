@@ -753,7 +753,7 @@ class PrototypeForest:
     
     def fit(self, features, labels, bag_ids):
         for i in range(self.size):
-            if self.use_prototype_learner:
+            if (self.use_prototype_learner) & (i%10==1):
                 print(f"Tree {i} will be trained")
 
             (inbag_indices,
