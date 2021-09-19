@@ -725,7 +725,7 @@ print(f"Group id is {group_id}")
 datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
 best_params = pd.read_csv("./best_params.csv")
 
-check = os.listdir("./performance_new")
+check = os.listdir("./performance_x")
 ran_already = [x.split(".")[0] for x in check]
 datasets = list(set(datasets) - set(ran_already))
 
@@ -797,7 +797,7 @@ for dataset in datasets:
                                     min_samples_split=4,
                                     prototype_count=1,
                                     early_stopping_round= 5,
-                                    use_prototype_learner = False)
+                                    use_prototype_learner = True)
 
             model.fit(train_features, train_labels, train_bag_ids)
 
@@ -814,4 +814,4 @@ for dataset in datasets:
 
     print(f"Accuracy for {dataset} is {sum(all_accuracy)/len(all_accuracy)}")
     perf_df = pd.DataFrame(info_list, columns=["dataset", "rep", "fold", "best_size", "best_depth", "best_var",  "auc", "time"])
-    perf_df.to_csv(f"./performance_new/{dataset}.csv")
+    perf_df.to_csv(f"./performance_x/{dataset}.csv")
