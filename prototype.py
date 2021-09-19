@@ -1,44 +1,22 @@
-import pandas as pd
-import sys
-import numpy as np
-from sklearn import tree, metrics
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestClassifier
-from scipy.stats import mode
-import math
-import itertools
-
 import os
 import random
+import sys
+import time
+import math
 
 import pandas as pd
 import numpy as np
-from sklearn import tree, metrics
-from sklearn.preprocessing import StandardScaler
+from sklearn import tree
 from sklearn.decomposition import PCA
-from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestClassifier
-from scipy.stats import mode
-import math
-import itertools
-
-import os
-
-import numpy as np
-import torch
-import numpy as np
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score
-from model import ShapeletGenerator, pairwise_dist
-from mil import get_data
-#from prototype_forest import PrototypeForest
-import time
-import os
+from sklearn.pipeline import Pipeline
+from scipy.stats import mode
 
 import torch
 import torch.nn as nn
-import numpy as np
+
+from model import ShapeletGenerator, pairwise_dist
 
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
@@ -393,12 +371,12 @@ class PrototypeTreeClassifier:
             return check
         
         else:
-            number_of_rows = self.train_features.shape[0]
+            number_of_rows = features.shape[0]
             random_indices = np.random.choice(number_of_rows, 
                                               size=prototype_count, 
                                               replace=False)
             
-            prot = self.train_features[random_indices, :]
+            prot = features[random_indices, :]
             if len(prot.shape) == 1:
                 prot = prot.reshape(1, prot.shape[0])
             return prot
@@ -414,9 +392,9 @@ class PrototypeTreeClassifier:
 
     def features_via_prototype(self, feature_types, features, bag_ids, prototypes):
         distances = self.calculate_distances(features, prototypes)
-
+        
         bin_count  = np.unique(bag_ids, return_counts=True)[1]
-        ids, index  = np.unique(bag_ids, return_index=True)
+        _, index  = np.unique(bag_ids, return_index=True)
 
         feature_list = []
         for i in range(0, prototypes.shape[0]):
@@ -431,15 +409,15 @@ class PrototypeTreeClassifier:
                 feature_list.append(min_vals)
 
             if "mean" in feature_types:
-                group_sum = np.add.reduceat(distances[:, i], index)
                 group_mean = np.add.reduceat(distances[:, i], index)
-                mean_vals = np.repeat(group_mean, bin_count)
+                mean_vals = np.repeat(group_mean/bin_count, bin_count)
                 feature_list.append(mean_vals)
-
+        
         return np.array(np.transpose(feature_list))
 
     def dist1d(self, features, prototypes, distance_type="l2"):
         if distance_type == "l2":
+
             distance = np.linalg.norm(features - prototypes, axis=1)
         elif distance_type == "l1":
             distance = np.abs(features - prototypes)
@@ -449,6 +427,7 @@ class PrototypeTreeClassifier:
 
     def calculate_distances(self, features, prototypes):
         feature_list = []
+        
         for i in range(0, prototypes.shape[0]):
             data = self.dist1d(features, prototypes[i], distance_type="l2")
             feature_list.append(data)
@@ -457,14 +436,15 @@ class PrototypeTreeClassifier:
         return data
 
     def calcBestSplit(self, features, features_via_prototype, labels, bag_ids):
+        ids, index  = np.unique(bag_ids, return_index=True)
+        
         bdc = tree.DecisionTreeClassifier(
-            random_state=0, 
-            max_depth=1, 
+            random_state=0,
             criterion="entropy",
             min_samples_split=2
         )
-        bdc.fit(features_via_prototype, labels.flatten())
-
+        bdc.fit(features_via_prototype[index], labels[index])
+        
         threshold = bdc.tree_.threshold[0]
         split_col = bdc.tree_.feature[0]
 
@@ -489,16 +469,17 @@ class PrototypeTreeClassifier:
                 node.is_terminal = True
                 return
 
-            if features.shape[0] < self.min_samples_split:
+            if len(np.unique(bag_ids)) < self.min_samples_split:
                 node.is_terminal = True
                 return
 
             if np.unique(labels).shape[0] == 1:
                 node.is_terminal = True
                 return
-
+            
             node.prototype = self.prototype(bag_ids, features, labels, self.prototype_count)
             features_updated = self.features_via_prototype(self.feature_types, features, bag_ids, node.prototype)
+            
             # calculating current split
             (splitCol, 
              thresh, 
@@ -511,29 +492,32 @@ class PrototypeTreeClassifier:
                                                  features_updated, 
                                                  labels, 
                                                  bag_ids)
-
+            
             if splitCol is None:
                 node.is_terminal = True
                 return
 
-            if features_left.shape[0] < self.min_samples_leaf or features_right.shape[0] < self.min_samples_leaf:
+            if len(np.unique(bag_ids_left)) < self.min_samples_leaf or len(np.unique(bag_ids_right)) < self.min_samples_leaf:
                 node.is_terminal = True
                 return
-
+            
             node.column = splitCol
             node.threshold = thresh
-
+            
+            _, index_left  = np.unique(bag_ids_left, return_index=True)
+            _, index_right  = np.unique(bag_ids_right, return_index=True)
+            
             # creating left and right child nodes
             node.left = Node()
             node.left.depth = node.depth + 1
-            node.left.probas = self.nodeProbas(labels_left)
+            node.left.probas = self.nodeProbas(labels_left[index_left])
 
             node.right = Node()
             node.right.depth = node.depth + 1
-            node.right.probas = self.nodeProbas(labels_right)
+            node.right.probas = self.nodeProbas(labels_right[index_right])
 
-            # splitting recursevely
-
+            # splitting recursively
+            
             self.buildDT(features_right, labels_right, bag_ids_right, node.right)
             self.buildDT(features_left, labels_left, bag_ids_left, node.left)
 
@@ -545,7 +529,7 @@ class PrototypeTreeClassifier:
 
         self.Tree = Node()
         self.Tree.depth = 1
-
+        
         self.buildDT(features, labels, bag_ids, self.Tree)
 
     def predictSample(self, features, bag_ids, node):
@@ -593,80 +577,16 @@ class PrototypeTreeClassifier:
             predictions = np.concatenate((predictions, pred), axis=0)
 
         return np.asarray(predictions)
-    
-def sample(features, labels, bag_ids, stratified, sample_rate):
-    if stratified:
-        pos_sample_size = math.ceil(np.where(labels == 1)[0].shape[0] * sample_rate)
-        neg_sample_size = math.ceil(np.where(labels == 0)[0].shape[0] * sample_rate)
-        indices_pos = np.random.choice(np.where(labels == 1)[0], pos_sample_size, replace=False)
-        indices_neg = np.random.choice(np.where(labels == 0)[0], neg_sample_size, replace=False)
-        inbag_indices = np.concatenate((indices_pos, indices_neg))
-    else:
-        sample_size = math.ceil(labels.shape[0] * sample_rate)
-        inbag_indices = np.random.choice(np.where(labels == 1)[0], sample_size, replace=False)
 
-    oo_bag_mask = np.ones(labels.shape[0], dtype=bool)
-    oo_bag_mask[inbag_indices] = False
-
-    outbag_indices = np.where(oo_bag_mask == 1)
-
-    return inbag_indices, outbag_indices
-
-def get_parameter_scores(features, labels, bag_ids, params, fit_on_full = True):
-    keys, values = zip(*params.items())
-    params_list = [dict(zip(keys, v)) for v in itertools.product(*values)]
-    
-    param_vals_scores = dict()
-    for param_vals in params_list:
-        if param_vals["explained_variance"] < 1:
-            pipe = Pipeline([('pca', PCA(n_components = param_vals["explained_variance"], 
-                             svd_solver = "full")), 
-             ('scaler', StandardScaler()), ])
-        else:
-            pipe = Pipeline([('scaler', StandardScaler()), ])
-        pipe.fit(features)
-
-        train_features = pipe.transform(features)
-        test_features = pipe.transform(features)
-
-        score_list = []
-        for i in range(0, param_vals["forest_size"]):
-            (inbag_indices, outbag_indices) = sample(features, labels, bag_ids, stratified = True, sample_rate = 0.8)      
-
-            inbag_features = features[inbag_indices]
-            inbag_labels = labels[inbag_indices]
-            inbag_bag_ids = bag_ids[inbag_indices]
-
-            outbag_features = features[outbag_indices]
-            outbag_labels = labels[outbag_indices]
-            outbag_bag_ids = bag_ids[outbag_indices]
-
-            model = PrototypeTreeClassifier(
-                max_depth=param_vals["max_depth"], 
-                min_samples_leaf=param_vals["min_samples_leaf"],
-                min_samples_split=2
-            )
-
-            model.fit(inbag_features, inbag_labels, inbag_bag_ids)
-            preds = model.predict(outbag_features, outbag_bag_ids)
-
-            score = metrics.roc_auc_score(outbag_labels, preds)
-            score_list.append(score)
-
-        mean_score = sum(score_list)/len(score_list)
-        key = frozenset(param_vals.items())
-        param_vals_scores[key] = mean_score
-
-    return param_vals_scores
 
 def split_features_labels_bags(data):
     features = data[data.columns[~data.columns.isin([0, 1])]].to_numpy()
     labels = data[0].to_numpy()
     bag_ids = data[1].to_numpy()
 
-    sort_index = np.argsort(bag_ids)
-    bag_ids = bag_ids[sort_index]
-    features = features[sort_index]
+    #sort_index = np.argsort(bag_ids)
+    #bag_ids = bag_ids[sort_index]
+    #features = features[sort_index]
     
     return (features, labels, bag_ids)
 
@@ -697,7 +617,7 @@ def train_test_split(dataset, rep, fold, explained_variance, fit_on_full = False
         pipe = Pipeline([('scaler', StandardScaler()), ])
     
     if fit_on_full:
-        pipe.fit(data[data.columns[~data.columns.isin(['0','1'])]].to_numpy())
+        pipe.fit(data[data.columns[~data.columns.isin([0,1])]].to_numpy())
     else:
         pipe.fit(train_features)
 
@@ -711,7 +631,6 @@ def train_test_split(dataset, rep, fold, explained_variance, fit_on_full = False
         test_features, 
         test_labels,
         test_bag_ids)
-
 
 class PrototypeForest:
     def __init__(self, size,
@@ -737,8 +656,10 @@ class PrototypeForest:
         group_min = np.minimum.reduceat(labels, index)
         pos_bag_size = math.ceil(np.where(group_min == 1)[0].shape[0] * 0.8)
         neg_bag_size = math.ceil(np.where(group_min == 0)[0].shape[0] * 0.8)
-        bags_pos = np.random.choice(np.where(group_min == 1)[0], pos_bag_size, replace=False)
-        bags_neg = np.random.choice(np.where(group_min == 0)[0], neg_bag_size, replace=False)
+        
+        bags_pos = np.random.choice(ids[np.where(group_min == 1)], pos_bag_size, replace=False)
+        bags_neg = np.random.choice(ids[np.where(group_min == 0)], neg_bag_size, replace=False)
+        
         df = pd.DataFrame(np.concatenate([train_bag_ids.reshape(train_bag_ids.shape[0],1),
                                           train_labels.reshape(train_labels.shape[0],1)],
                                          axis=1))
@@ -755,9 +676,8 @@ class PrototypeForest:
         for i in range(self.size):
             if (self.use_prototype_learner) & (i%10==1):
                 print(f"Tree {i} will be trained")
-
-            (inbag_indices,
-             outbag_indices) = self.sample(features, labels, bag_ids)
+            
+            (inbag_indices, _) = self.sample(features, labels, bag_ids)
             inbag_features = features[inbag_indices]
             inbag_labels = labels[inbag_indices]
             inbag_bag_ids = bag_ids[inbag_indices]
@@ -787,8 +707,6 @@ class PrototypeForest:
         temp = [t.predict(features, bag_ids) for t in self._trees]
         preds = np.transpose(np.array(temp))
         return np.sum(preds==1, axis=1)/self.size
-    
-import time
 
 def generate_random(lower, upper):
     random_number = random.random()
@@ -801,14 +719,12 @@ parameters = [[0.00001, 0.05], [0.00001, 0.05],[0.00001, 0.05], [0.00001, 0.05],
 
 groups = pd.read_csv("./dataset_groups.csv")
 
-import sys
 group_id = sys.argv[1]
 print(f"Group id is {group_id}")
 
 datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
 best_params = pd.read_csv("./best_params.csv")
 
-import os
 check = os.listdir("./performance_new")
 ran_already = [x.split(".")[0] for x in check]
 datasets = list(set(datasets) - set(ran_already))
@@ -848,7 +764,7 @@ for dataset in datasets:
 
             probas = model.predict_proba(test_features, test_bag_ids)
 
-            score = metrics.roc_auc_score(test_labels, probas)
+            score = roc_auc_score(test_labels, probas)
             scores.append([k, score])
     
             df = pd.DataFrame(scores, columns = ["variance","score"])
@@ -862,7 +778,7 @@ for dataset in datasets:
     all_accuracy = []
 
     print(f"Best size is {best_size} and best depth is {best_depth} and best var is {best_var} for dataset {dataset}")
-    
+
     for i in range(1,6):
         for j in range(1, 11):
             print(f"Rep {i}, fold {j}")
@@ -873,26 +789,29 @@ for dataset in datasets:
                  train_bag_ids,
                  test_features,
                  test_labels,
-                 test_bag_ids) = train_test_split(dataset, i, j, best_var, fit_on_full = False)
+                 test_bag_ids) = train_test_split(dataset, i, j, best_var, fit_on_full = True)
 
             model = PrototypeForest(size=best_size,
                                     max_depth=best_depth,
-                                    min_samples_leaf=40,
-                                    min_samples_split=80,
+                                    min_samples_leaf=2,
+                                    min_samples_split=4,
                                     prototype_count=1,
                                     early_stopping_round= 5,
-                                    use_prototype_learner = True)
+                                    use_prototype_learner = False)
 
             model.fit(train_features, train_labels, train_bag_ids)
 
             probas = model.predict_proba(test_features, test_bag_ids)
 
-            score = metrics.roc_auc_score(test_labels, probas)
+            _, index  = np.unique(test_bag_ids, return_index=True)
+
+            score = roc_auc_score(test_labels[index], probas[index])
             end_time = time.time()
             info_list_row = [dataset, i, j, best_size, best_depth, best_var, score, end_time - start_time]
             info_list.append(info_list_row)
+            all_accuracy.append(score)
             print(f"Score is {score}")
-            all_accuracy.append(metrics.roc_auc_score(test_labels, probas))
 
+    print(f"Accuracy for {dataset} is {sum(all_accuracy)/len(all_accuracy)}")
     perf_df = pd.DataFrame(info_list, columns=["dataset", "rep", "fold", "best_size", "best_depth", "best_var",  "auc", "time"])
     perf_df.to_csv(f"./performance_new/{dataset}.csv")
