@@ -717,7 +717,7 @@ def generate_random(lower, upper):
 
 parameters = [[0.00001, 0.05], [0.00001, 0.05],[0.00001, 0.05], [0.00001, 0.05], [0.00001, 0.05], [1],[1]]
 
-groups = pd.read_csv("./dataset_groups.csv")
+groups = pd.read_csv("./corel_groups.csv")
 
 group_id = sys.argv[1]
 print(f"Group id is {group_id}")
