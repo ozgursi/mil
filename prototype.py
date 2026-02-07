@@ -717,17 +717,19 @@ def generate_random(lower, upper):
 
 parameters = [[0.00001, 0.05], [0.00001, 0.05],[0.00001, 0.05], [0.00001, 0.05], [0.00001, 0.05], [1],[1]]
 
-groups = pd.read_csv("./corel_groups.csv")
+#groups = pd.read_csv("./corel_groups.csv")
 
-group_id = sys.argv[1]
-print(f"Group id is {group_id}")
+#group_id = sys.argv[1]
+#print(f"Group id is {group_id}")
 
-datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
+#datasets = groups[groups["Group"] == int(group_id)]["dataset"].to_list()
 best_params = pd.read_csv("./best_params.csv")
 
 check = os.listdir("./performance_x")
-ran_already = [x.split(".")[0] for x in check]
-datasets = list(set(datasets) - set(ran_already))
+#ran_already = [x.split(".")[0] for x in check]
+
+#datasets = list(set(datasets) - set(ran_already))
+datasets = ["BrownCreeper", "Web3"]
 
 for dataset in datasets:
     scores = []
@@ -797,7 +799,7 @@ for dataset in datasets:
                                     min_samples_split=4,
                                     prototype_count=1,
                                     early_stopping_round= 5,
-                                    use_prototype_learner = True)
+                                    use_prototype_learner = False)
 
             model.fit(train_features, train_labels, train_bag_ids)
 
